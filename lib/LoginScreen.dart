@@ -1,5 +1,8 @@
 import 'package:firebase/Round-Button.dart';
 import 'package:firebase/Signup-Button.dart';
+import 'package:firebase/home.dart';
+import 'package:firebase/utils.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -10,6 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  bool loading = false;
   final _formKey = GlobalKey<FormState>();
   final email = TextEditingController();
   final password = TextEditingController();
@@ -24,7 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: const Text(
@@ -61,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               TextFormField(
                 keyboardType: TextInputType.text,
-
                 controller: password,
                 obscureText: true,
                 decoration: InputDecoration(
@@ -83,8 +85,33 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
           RoundButton(
               title: 'Login',
+              loading: loading,
               onTap: () {
                 if (_formKey.currentState!.validate()) {}
+                setState(() {
+                  loading = true;
+                });
+                FirebaseAuth.instance
+                    .signInWithEmailAndPassword(
+                  email: email.text.toString(),
+                  password: password.text.toString(),
+                )
+                    .then((value) {
+                  Utils().toastMessage(value.user!.email.toString());
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: ((context) => const HomeView())));
+                  setState(() {
+                    loading = false;
+                  });
+                }).onError((error, stackTrace) {
+                  debugPrint(error.toString());
+                  setState(() {
+                    loading = false;
+                  });
+                  Utils().toastMessage(error.toString());
+                });
               }),
           const SizedBox(
             height: 10,
@@ -93,9 +120,14 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text("Don't have account"),
-              TextButton(onPressed: (){
-                Navigator.push(context, MaterialPageRoute(builder: (context)=> const SignUpScreen()));
-              }, child: const Text('Create Account')),
+              TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SignUpScreen()));
+                  },
+                  child: const Text('Create Account')),
             ],
           )
         ],
